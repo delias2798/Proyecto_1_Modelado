@@ -235,13 +235,40 @@ class Lista(object):
             i+=1
         return n1
 
-    def mov(self,ind2Mov,posicion):
-           self.set_cursor(ind2Mov)
-           tmp=self.get_nodo_pos(posicion-1)
-           tmp2=self.get_nodo_pos(ind2Mov-1)
-           tmp2.siguiente= self.cursor.siguiente
-           self.cursor.siguiente=tmp.siguiente
-           tmp.siguiente=self.cursor
+    def mov(self, pos1, pos2):
+        """Cambia el orden de los nodos en la lista enlazada"""
+        if pos1 == pos2:
+            return  # No se necesita hacer nada si las posiciones son las mismas
+
+        nodo1 = self.get_nodo_pos(pos1)
+        nodo2 = self.get_nodo_pos(pos2)
+
+        nodo1_anterior = None
+        nodo2_anterior = None
+        nodo_actual = self.primero
+
+        # Encuentra los nodos anteriores a los nodos que se van a intercambiar
+        while nodo_actual:
+            if nodo_actual.siguiente == nodo1:
+                nodo1_anterior = nodo_actual
+            elif nodo_actual.siguiente == nodo2:
+                nodo2_anterior = nodo_actual
+            nodo_actual = nodo_actual.siguiente
+
+        # Intercambia los nodos
+        if nodo1_anterior:
+            nodo1_anterior.siguiente = nodo2
+        else:
+            self.primero = nodo2
+
+        if nodo2_anterior:
+            nodo2_anterior.siguiente = nodo1
+        else:
+            self.primero = nodo1
+
+        nodo_tmp = nodo1.siguiente
+        nodo1.siguiente = nodo2.siguiente
+        nodo2.siguiente = nodo_tmp
 
 class LineaProduccion(object):
 
@@ -285,16 +312,54 @@ class LineaProduccion(object):
     def insertarProceso(self,pro):
       self.lProce.insertar_siguiente(pro)
 
-    #def insertarTarea(tarea):
+    def cambiarProceso(self,tarea1,tarea2):
+      ind2Mov=1
+      posicion=1
+      
+      t=self.lProce.primero
+      while(tarea1!=t.valor.nombre):
+        ind2Mov+=1
+        t=t.siguiente
+      
+      t=self.lProce.primero
+      
+      while(tarea2!=t.valor.nombre):
+        posicion+=1
+        t=t.siguiente
+
+      self.lProce.mov(ind2Mov,posicion)
+
+      def insertar_producto_en_tarea(self, nombre_tarea, producto):
+        """Inserta un producto en la cola de una tarea por su nombre"""
+        nodo_proceso = self.lProce.primero
+
+        while nodo_proceso:
+            proceso = nodo_proceso.valor
+
+            # Busca la tarea por su nombre en la cola de tareas del proceso
+            nodo_tarea = proceso.cola.primero
+            while nodo_tarea:
+                tarea = nodo_tarea.valor
+                if tarea.nombre == nombre_tarea:
+                    tarea.insertar_producto(producto)
+                    return  # Se encontró la tarea y se insertó el producto
+                nodo_tarea = nodo_tarea.siguiente
+
+            nodo_proceso = nodo_proceso.siguiente
+
+        print(f"No se encontró la tarea con el nombre '{nombre_tarea}'")
+
 
 l=LineaProduccion()
-#l.GenerarReporte()
+
 p1=Proceso("Preparar")
 l.insertarProceso(p1)
-#l.GenerarReporte()
+
 t1=Tarea("Pintar",1)
 p1.agregarACola(t1)
 
+p2=Proceso("Preparar0")
+l.insertarProceso(p2)
 
 t2=Tarea("Empacar",1)
 p1.agregarACola(t2)
@@ -305,6 +370,8 @@ t1.agregarACola(pr1)
 t1.agregarACola(pr2)
 l.GenerarReporte()
 
+
+"""
 import datetime
 
 def imprimir_cada_segundo():
@@ -318,4 +385,4 @@ def imprimir_cada_segundo():
             tiempo_inicial = tiempo_actual
 
 # Llama a la función para empezar a imprimir cada segundo
-imprimir_cada_segundo()
+imprimir_cada_segundo()"""
