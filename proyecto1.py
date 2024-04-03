@@ -329,7 +329,7 @@ class LineaProduccion(object):
 
       self.lProce.mov(ind2Mov,posicion)
 
-      def insertar_producto_en_tarea(self, nombre_tarea, producto):
+    def insertar_producto_en_tarea(self, nombre_tarea, producto):
         """Inserta un producto en la cola de una tarea por su nombre"""
         nodo_proceso = self.lProce.primero
 
