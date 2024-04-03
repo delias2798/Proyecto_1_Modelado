@@ -349,6 +349,27 @@ class LineaProduccion(object):
 
         print(f"No se encontró la tarea con el nombre '{nombre_tarea}'")
 
+    def Mostrar_Info(self):        
+        nodo_proceso = self.lProce.primero
+        procesoT=0
+        TareaT=0
+        ProductoT=0
+        while nodo_proceso:
+            proceso = nodo_proceso.valor
+            if not proceso.cola.esta_vacia():
+                nodo_tarea = proceso.cola.primero
+                while nodo_tarea:
+                    tarea = nodo_tarea.valor
+                    if not tarea.cola.esta_vacia():
+                        nodo_producto = tarea.cola.primero
+                        while nodo_producto:
+                            ProductoT+=1
+                            nodo_producto = nodo_producto.siguiente
+                    TareaT+=1
+                    nodo_tarea = nodo_tarea.siguiente
+            procesoT+=1
+            nodo_proceso = nodo_proceso.siguiente 
+        return [procesoT-2,TareaT,ProductoT]
 
 l=LineaProduccion()
 
