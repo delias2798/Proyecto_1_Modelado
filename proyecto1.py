@@ -24,7 +24,7 @@ class Proceso():
       self.cola.encolar(object)
 
     def sacarACola(self,object):
-        self.cola.desencolar(object)
+        self.cola.desencolar()
 
 class Tarea(Proceso):
 
@@ -41,7 +41,7 @@ class Tarea(Proceso):
       self.cola.encolar(object)
 
     def sacarACola(self,object):
-        self.cola.desencolar(object)
+        self.cola.desencolar()
 
 class Nodo(object):
 
