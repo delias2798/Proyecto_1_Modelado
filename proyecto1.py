@@ -13,6 +13,9 @@ class Producto():
         self.nombre = nombre
         self.tiempoEntarea=0
 
+    def __str__(self):
+      return f'producto {self.nombre} tiempo {self.tiempoEntarea}'
+    
 class Proceso():
 
     def __init__(self,nombre):
@@ -23,8 +26,8 @@ class Proceso():
     def agregarACola(self,object):
       self.cola.encolar(object)
 
-    def sacarACola(self,object):
-        self.cola.desencolar(object)
+    def sacarDeCola(self):
+        return self.cola.desencolar()
 
 class Tarea(Proceso):
 
@@ -32,16 +35,13 @@ class Tarea(Proceso):
         super().__init__(nombre)
         self.ocupado=False
         self.productoEnProceso=""
+        self.tiempo=tiempo
 
 
     def __str__(self):
       return self.nombre
 
-    def agregarACola(self,object):
-      self.cola.encolar(object)
 
-    def sacarACola(self,object):
-        self.cola.desencolar(object)
 
 class Nodo(object):
 
@@ -293,14 +293,13 @@ class LineaProduccion(object):
 
                 while nodo_tarea:
                     tarea = nodo_tarea.valor
-                    print(f"\tTarea: {tarea.nombre}")
-
+                    print(f"\tTarea: {tarea.nombre}  producto en tarea {tarea.productoEnExe}")
                     if not tarea.cola.esta_vacia():
                         nodo_producto = tarea.cola.primero
-
+                        
                         while nodo_producto:
                             producto = nodo_producto.valor
-                            print(f"\t\tProducto: {producto.nombre}")
+                            print(f"\t\tProducto: {producto.nombre} tiempo {producto.tiempoEntarea}")
 
                             nodo_producto = nodo_producto.siguiente
 
@@ -315,19 +314,45 @@ class LineaProduccion(object):
     def cambiarProceso(self,tarea1,tarea2):
       ind2Mov=1
       posicion=1
-      
+
       t=self.lProce.primero
       while(tarea1!=t.valor.nombre):
         ind2Mov+=1
         t=t.siguiente
-      
+
       t=self.lProce.primero
-      
+
       while(tarea2!=t.valor.nombre):
         posicion+=1
         t=t.siguiente
 
       self.lProce.mov(ind2Mov,posicion)
+
+
+    def Mostrar_Info(self):
+      nodo_proceso = self.lProce.primero
+      procesoT=0
+      TareaT=0
+      ProductoT=0
+      while nodo_proceso:
+          proceso = nodo_proceso.valor
+          if not proceso.cola.esta_vacia():
+              nodo_tarea = proceso.cola.primero
+              while nodo_tarea:
+                  tarea = nodo_tarea.valor
+                  if not tarea.cola.esta_vacia():
+                      nodo_producto = tarea.cola.primero
+                      while nodo_producto:
+                          ProductoT+=1
+                          nodo_producto = nodo_producto.siguiente
+                  TareaT+=1
+                  nodo_tarea = nodo_tarea.siguiente
+          procesoT+=1
+          nodo_proceso = nodo_proceso.siguiente
+      return [procesoT-2,TareaT,ProductoT]
+
+
+
 
     def insertar_producto_en_tarea(self, nombre_tarea, producto):
         """Inserta un producto en la cola de una tarea por su nombre"""
@@ -341,35 +366,34 @@ class LineaProduccion(object):
             while nodo_tarea:
                 tarea = nodo_tarea.valor
                 if tarea.nombre == nombre_tarea:
-                    tarea.insertar_producto(producto)
+                  
+                    tarea.agregarACola(producto)
                     return  # Se encontró la tarea y se insertó el producto
                 nodo_tarea = nodo_tarea.siguiente
 
             nodo_proceso = nodo_proceso.siguiente
 
         print(f"No se encontró la tarea con el nombre '{nombre_tarea}'")
+    
+    def Actualizar(self):
+      nodo_proceso = self.lProce.primero
+      while nodo_proceso:
+          proceso = nodo_proceso.valor
+          if not proceso.cola.esta_vacia():
+              nodo_tarea = proceso.cola.primero
+              while nodo_tarea:
+                
+                  tarea = nodo_tarea.valor
+                  if not tarea.cola.esta_vacia():
+                    if not tarea.productoEnExe:
+                      tarea.productoEnExe=tarea.cola.desencolar()
+                    else:
+                      
+                      tarea.productoEnExe.tiempoEntarea+=1
+                  nodo_tarea = nodo_tarea.siguiente
+          
+          nodo_proceso = nodo_proceso.siguiente
 
-    def Mostrar_Info(self):        
-        nodo_proceso = self.lProce.primero
-        procesoT=0
-        TareaT=0
-        ProductoT=0
-        while nodo_proceso:
-            proceso = nodo_proceso.valor
-            if not proceso.cola.esta_vacia():
-                nodo_tarea = proceso.cola.primero
-                while nodo_tarea:
-                    tarea = nodo_tarea.valor
-                    if not tarea.cola.esta_vacia():
-                        nodo_producto = tarea.cola.primero
-                        while nodo_producto:
-                            ProductoT+=1
-                            nodo_producto = nodo_producto.siguiente
-                    TareaT+=1
-                    nodo_tarea = nodo_tarea.siguiente
-            procesoT+=1
-            nodo_proceso = nodo_proceso.siguiente 
-        return [procesoT-2,TareaT,ProductoT]
 
 l=LineaProduccion()
 
