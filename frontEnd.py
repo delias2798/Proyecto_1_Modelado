@@ -1,15 +1,35 @@
 import tkinter as tk
+from tkinter import ttk
 from proyecto1 import Producto, Proceso, Tarea, Nodo, Cola, Lista, LineaProduccion
 
 class App:
     def __init__(self, root):
+        self.frame_color = '#3C6373' #verde
+        self.text_color_1 = '#FFFFFF' #blanco
+        self.text_color_2 = '#000000' #negro
+        self.button_color_1 = '#F2C791' # cafe
+        self.button_color_2 = '#3C6373' # verde frame
+        self.button_border_color_1 = '#F2C791' # cafe
+
+        self.style = ttk.Style()
+        self.style.theme_use('clam')
+        self.style.configure('TButton', font=('Helvetica', 12))
+        self.style.configure("Custom.TButton", borderwidth=5, bordercolor=self.button_border_color_1, background=self.button_color_2, foreground=self.text_color_1)
+        self.style.configure("Custom2.TButton", borderwidth=5, bordercolor=self.button_border_color_1, background=self.button_color_1, foreground=self.text_color_2)
+        # self.style.configure('Custom.TLabel', background='red')
+        self.style.map('Custom.TButton', background=[
+            ('disabled', self.button_color_1),
+            ('active', self.button_color_1)])
+
+
         self.root = root
         self.root.geometry("1440x1024")
+        self.root.configure(bg=self.frame_color)
 
-        self.frame1 = tk.Frame(self.root)
-        self.frame2 = tk.Frame(self.root)
-        self.frame3 = tk.Frame(self.root)
-        self.frame4 = tk.Frame(self.root)
+        self.frame1 = tk.Frame(self.root, bg=self.frame_color)
+        self.frame2 = tk.Frame(self.root, bg=self.frame_color)
+        self.frame3 = tk.Frame(self.root, bg=self.frame_color)
+        self.frame4 = tk.Frame(self.root, bg=self.frame_color)
 
         self.data = {"screen1": "Data from Screen 1",
                      "screen2": "Data from Screen 2",
@@ -41,29 +61,29 @@ class App:
         for widget in frame.winfo_children():
             widget.destroy()
 
-        label = tk.Label(frame, text="Datos de la Línea de Producción", font=("Helvetica", 24))
+        label = tk.Label(frame, text="Datos de la Línea de Producción", font=("Helvetica", 24), bg=self.frame_color, fg=self.text_color_1)
         label.pack(pady=10)
 
         # Agrega la información de la línea de producción al frame
         info = self.linea_produccion.Mostrar_Info()
-        data_label = tk.Label(frame, text=f"Procesos: {info[0]}, Tareas: {info[1]}, Productos: {info[2]}", font=("Helvetica", 16))
+        data_label = tk.Label(frame, text=f"Procesos: {info[0]}, Tareas: {info[1]}, Productos: {info[2]}", font=("Helvetica", 16), bg=self.frame_color, fg=self.text_color_1)
         data_label.pack(pady=10)
 
         # Agrega botones para navegar entre pantallas
-        buttons_frame = tk.Frame(frame)
+        buttons_frame = tk.Frame(frame, bg=self.frame_color)
         buttons_frame.pack(pady=10)
         for i in range(1, 5):
-            button = tk.Button(buttons_frame, text=f"Go to Screen {i}",
-                               command=lambda i=i: self.switch_frame(i))
+            button = ttk.Button(buttons_frame, text=f"Go to Screen {i}",
+                               command=lambda i=i: self.switch_frame(i), style="Custom.TButton")
             button.pack(side=tk.LEFT, padx=5)
 
     def setup_screen(self, frame, title, data, screen_number):
         frame.grid(row=0, column=0, sticky="nsew")
 
-        label = tk.Label(frame, text=title, font=("Helvetica", 24))
+        label = tk.Label(frame, text=title, font=("Helvetica", 24), bg=self.frame_color, fg=self.text_color_1)
         label.pack(pady=10)
 
-        data_label = tk.Label(frame, text=data, font=("Helvetica", 16))
+        data_label = tk.Label(frame, text=data, font=("Helvetica", 16), bg=self.frame_color, fg=self.text_color_1)
         data_label.pack(pady=10)
 
         buttons_frame = tk.Frame(frame)
@@ -71,8 +91,8 @@ class App:
 
         for i in range(1, 5):
             if i != screen_number:
-                button = tk.Button(buttons_frame, text=f"Go to Screen {i}",
-                                   command=lambda i=i: self.switch_frame(i))
+                button = ttk.Button(buttons_frame, text=f"Go to Screen {i}",
+                                   command=lambda i=i: self.switch_frame(i), style="Custom2.TButton")
                 button.pack(side=tk.LEFT, padx=5)
 
     def switch_frame(self, screen_number):
