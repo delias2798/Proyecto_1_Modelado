@@ -352,8 +352,6 @@ class LineaProduccion(object):
       return [procesoT-2,TareaT,ProductoT]
 
 
-
-
     def insertar_producto_en_tarea(self, nombre_tarea, producto):
         """Inserta un producto en la cola de una tarea por su nombre"""
         nodo_proceso = self.lProce.primero
@@ -377,21 +375,90 @@ class LineaProduccion(object):
     
     def Actualizar(self):
       nodo_proceso = self.lProce.primero
+
+      if not len(self.inicioL)==0:
+        for producto in self.inicioL:
+
+          pProd=nodo_proceso.siguiente.valor.cola.primero.valor.nombre
+          self.insertar_producto_en_tarea(pProd,producto)
+
+      self.inicioL=[]
+      
+      
       while nodo_proceso:
           proceso = nodo_proceso.valor
           if not proceso.cola.esta_vacia():
               nodo_tarea = proceso.cola.primero
               while nodo_tarea:
-                
+
                   tarea = nodo_tarea.valor
                   if not tarea.cola.esta_vacia():
+
                     if not tarea.productoEnExe:
                       tarea.productoEnExe=tarea.cola.desencolar()
-                    else:
                       
+                    elif self.despuesinicio:
                       tarea.productoEnExe.tiempoEntarea+=1
+                    self.despuesinicio=True
+
+                    finTie=tarea.productoEnExe.tiempoEntarea>=tarea.tiempo
+                    finLtar=nodo_tarea.siguiente ==None
+                    finPro=nodo_proceso.siguiente.valor.nombre==self.procfinal.nombre
+                    proNoT=nodo_proceso.siguiente.valor.cola.esta_vacia()
+                    if finTie and not finLtar:
+                        produc=tarea.productoEnExe
+                        produc.tiempoEntarea=0
+                        nodo_tarea.siguiente.valor.agregarACola(produc)
+                        tarea.productoEnExe=tarea.cola.desencolar()
+                    elif finTie and finLtar and not finPro and not proNoT:
+                      produc=tarea.productoEnExe
+                      produc.tiempoEntarea=0
+                      nodo_proceso.siguiente.valor.cola.primero.valor.cola.agregarACola(produc)
+                      tarea.productoEnExe=tarea.productoEnExe=tarea.cola.desencolar()
+                    elif finTie and finLtar and finPro:
+                      produc=tarea.productoEnExe
+                      self.finL.append(produc)
+                      tarea.productoEnExe=tarea.productoEnExe=tarea.cola.desencolar()
+                    elif finTie and finLtar and not finPro and proNoT:
+                      produc=tarea.productoEnExe
+                      self.finL.append(produc)
+                      tarea.productoEnExe=tarea.productoEnExe=tarea.cola.desencolar()
+                  else:
+                    if not tarea.productoEnExe==None:
+
+                      finTie=tarea.productoEnExe.tiempoEntarea>=tarea.tiempo
+                      finLtar=nodo_tarea.siguiente ==None
+                      finPro=nodo_proceso.siguiente.valor.nombre==self.procfinal.nombre
+                      proNoT=nodo_proceso.siguiente.valor.cola.esta_vacia()
+                      tarea.productoEnExe.tiempoEntarea+=1
+                      if finTie and not finLtar:
+                          produc=tarea.productoEnExe
+                          produc.tiempoEntarea=0
+                          nodo_tarea.siguiente.valor.agregarACola(produc)
+                          if tarea.cola.esta_vacia():
+                            tarea.productoEnExe=None
+                          else:
+                            tarea.productoEnExe=tarea.cola.desencolar()
+                      elif finTie and finLtar and not finPro and not proNoT:
+                        produc=tarea.productoEnExe
+                        produc.tiempoEntarea=0
+                        nodo_proceso.siguiente.valor.cola.primero.valor.cola.agregarACola(produc)
+                        tarea.productoEnExe=tarea.productoEnExe=tarea.cola.desencolar()
+                      elif finTie and finLtar and finPro:
+                        produc=tarea.productoEnExe
+                        self.finL.append(produc)
+                        tarea.productoEnExe=tarea.productoEnExe=tarea.cola.desencolar()
+                      elif finTie and finLtar and not finPro and proNoT:
+                        produc=tarea.productoEnExe
+                        self.finL.append(produc)
+                        if tarea.cola.esta_vacia():
+                            tarea.productoEnExe=None
+                        else:
+                            tarea.productoEnExe=tarea.cola.desencolar()
+                      
+                   
                   nodo_tarea = nodo_tarea.siguiente
-          
+
           nodo_proceso = nodo_proceso.siguiente
 
 
