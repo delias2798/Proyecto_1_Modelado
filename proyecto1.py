@@ -460,7 +460,33 @@ class LineaProduccion(object):
                   nodo_tarea = nodo_tarea.siguiente
 
           nodo_proceso = nodo_proceso.siguiente
+    
+    def reiniciar(self):
+      # Vaciar la lista inicioL
+      self.inicioL = []
 
+      # Recorrer todas las tareas
+      nodo_proceso = self.lProce.primero
+      while nodo_proceso:
+          proceso = nodo_proceso.valor
+          nodo_tarea = proceso.cola.primero
+          while nodo_tarea:
+              tarea = nodo_tarea.valor
+             
+
+              # Sacar los productos de las colas y ponerlos en inicioL
+              if not tarea.cola.esta_vacia():
+                  primer_producto = tarea.cola.desencolar()
+                  self.inicioL.append(primer_producto)
+               # Sacar el producto en ejecución (si existe)
+              if tarea.productoEnExe:
+                  self.inicioL.append(tarea.productoEnExe)
+                  tarea.productoEnExe = None
+
+              nodo_tarea = nodo_tarea.siguiente
+
+          nodo_proceso = nodo_proceso.siguiente
+      self.inicioL.reverse()
 
 l=LineaProduccion()
 
