@@ -13,6 +13,9 @@ class Producto():
         self.nombre = nombre
         self.tiempoEntarea=0
 
+    def __str__(self):
+      return f'producto {self.nombre} tiempo {self.tiempoEntarea}'
+    
 class Proceso():
 
     def __init__(self,nombre):
@@ -23,8 +26,8 @@ class Proceso():
     def agregarACola(self,object):
       self.cola.encolar(object)
 
-    def sacarACola(self,object):
-        self.cola.desencolar(object)
+    def sacarDeCola(self):
+        return self.cola.desencolar()
 
 class Tarea(Proceso):
 
@@ -32,16 +35,13 @@ class Tarea(Proceso):
         super().__init__(nombre)
         self.ocupado=False
         self.productoEnProceso=""
+        self.tiempo=tiempo
 
 
     def __str__(self):
       return self.nombre
 
-    def agregarACola(self,object):
-      self.cola.encolar(object)
 
-    def sacarACola(self,object):
-        self.cola.desencolar(object)
 
 class Nodo(object):
 
@@ -235,13 +235,40 @@ class Lista(object):
             i+=1
         return n1
 
-    def mov(self,ind2Mov,posicion):
-           self.set_cursor(ind2Mov)
-           tmp=self.get_nodo_pos(posicion-1)
-           tmp2=self.get_nodo_pos(ind2Mov-1)
-           tmp2.siguiente= self.cursor.siguiente
-           self.cursor.siguiente=tmp.siguiente
-           tmp.siguiente=self.cursor
+    def mov(self, pos1, pos2):
+        """Cambia el orden de los nodos en la lista enlazada"""
+        if pos1 == pos2:
+            return  # No se necesita hacer nada si las posiciones son las mismas
+
+        nodo1 = self.get_nodo_pos(pos1)
+        nodo2 = self.get_nodo_pos(pos2)
+
+        nodo1_anterior = None
+        nodo2_anterior = None
+        nodo_actual = self.primero
+
+        # Encuentra los nodos anteriores a los nodos que se van a intercambiar
+        while nodo_actual:
+            if nodo_actual.siguiente == nodo1:
+                nodo1_anterior = nodo_actual
+            elif nodo_actual.siguiente == nodo2:
+                nodo2_anterior = nodo_actual
+            nodo_actual = nodo_actual.siguiente
+
+        # Intercambia los nodos
+        if nodo1_anterior:
+            nodo1_anterior.siguiente = nodo2
+        else:
+            self.primero = nodo2
+
+        if nodo2_anterior:
+            nodo2_anterior.siguiente = nodo1
+        else:
+            self.primero = nodo1
+
+        nodo_tmp = nodo1.siguiente
+        nodo1.siguiente = nodo2.siguiente
+        nodo2.siguiente = nodo_tmp
 
 class LineaProduccion(object):
 
@@ -266,14 +293,13 @@ class LineaProduccion(object):
 
                 while nodo_tarea:
                     tarea = nodo_tarea.valor
-                    print(f"\tTarea: {tarea.nombre}")
-
+                    print(f"\tTarea: {tarea.nombre}  producto en tarea {tarea.productoEnProceso}")
                     if not tarea.cola.esta_vacia():
                         nodo_producto = tarea.cola.primero
-
+                        
                         while nodo_producto:
                             producto = nodo_producto.valor
-                            print(f"\t\tProducto: {producto.nombre}")
+                            print(f"\t\tProducto: {producto.nombre} tiempo {producto.tiempoEntarea}")
 
                             nodo_producto = nodo_producto.siguiente
 
@@ -285,16 +311,100 @@ class LineaProduccion(object):
     def insertarProceso(self,pro):
       self.lProce.insertar_siguiente(pro)
 
-    #def insertarTarea(tarea):
+    def cambiarProceso(self,tarea1,tarea2):
+      ind2Mov=1
+      posicion=1
+
+      t=self.lProce.primero
+      while(tarea1!=t.valor.nombre):
+        ind2Mov+=1
+        t=t.siguiente
+
+      t=self.lProce.primero
+
+      while(tarea2!=t.valor.nombre):
+        posicion+=1
+        t=t.siguiente
+
+      self.lProce.mov(ind2Mov,posicion)
+
+
+    def Mostrar_Info(self):
+      nodo_proceso = self.lProce.primero
+      procesoT=0
+      TareaT=0
+      ProductoT=0
+      while nodo_proceso:
+          proceso = nodo_proceso.valor
+          if not proceso.cola.esta_vacia():
+              nodo_tarea = proceso.cola.primero
+              while nodo_tarea:
+                  tarea = nodo_tarea.valor
+                  if not tarea.cola.esta_vacia():
+                      nodo_producto = tarea.cola.primero
+                      while nodo_producto:
+                          ProductoT+=1
+                          nodo_producto = nodo_producto.siguiente
+                  TareaT+=1
+                  nodo_tarea = nodo_tarea.siguiente
+          procesoT+=1
+          nodo_proceso = nodo_proceso.siguiente
+      return [procesoT-2,TareaT,ProductoT]
+
+
+
+
+    def insertar_producto_en_tarea(self, nombre_tarea, producto):
+        """Inserta un producto en la cola de una tarea por su nombre"""
+        nodo_proceso = self.lProce.primero
+
+        while nodo_proceso:
+            proceso = nodo_proceso.valor
+
+            # Busca la tarea por su nombre en la cola de tareas del proceso
+            nodo_tarea = proceso.cola.primero
+            while nodo_tarea:
+                tarea = nodo_tarea.valor
+                if tarea.nombre == nombre_tarea:
+                  
+                    tarea.agregarACola(producto)
+                    return  # Se encontró la tarea y se insertó el producto
+                nodo_tarea = nodo_tarea.siguiente
+
+            nodo_proceso = nodo_proceso.siguiente
+
+        print(f"No se encontró la tarea con el nombre '{nombre_tarea}'")
+    
+    def Actualizar(self):
+      nodo_proceso = self.lProce.primero
+      while nodo_proceso:
+          proceso = nodo_proceso.valor
+          if not proceso.cola.esta_vacia():
+              nodo_tarea = proceso.cola.primero
+              while nodo_tarea:
+                
+                  tarea = nodo_tarea.valor
+                  if not tarea.cola.esta_vacia():
+                    if not tarea.productoEnExe:
+                      tarea.productoEnExe=tarea.cola.desencolar()
+                    else:
+                      
+                      tarea.productoEnExe.tiempoEntarea+=1
+                  nodo_tarea = nodo_tarea.siguiente
+          
+          nodo_proceso = nodo_proceso.siguiente
+
 
 l=LineaProduccion()
-#l.GenerarReporte()
+
 p1=Proceso("Preparar")
 l.insertarProceso(p1)
-#l.GenerarReporte()
+
 t1=Tarea("Pintar",1)
 p1.agregarACola(t1)
 
+p2=Proceso("Preparar0")
+l.insertarProceso(p2)
 
 t2=Tarea("Empacar",1)
 p1.agregarACola(t2)
@@ -305,6 +415,8 @@ t1.agregarACola(pr1)
 t1.agregarACola(pr2)
 l.GenerarReporte()
 
+
+"""
 import datetime
 
 def imprimir_cada_segundo():
@@ -318,4 +430,4 @@ def imprimir_cada_segundo():
             tiempo_inicial = tiempo_actual
 
 # Llama a la función para empezar a imprimir cada segundo
-imprimir_cada_segundo()
+imprimir_cada_segundo()"""
