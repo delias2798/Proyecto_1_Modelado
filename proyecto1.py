@@ -293,7 +293,7 @@ class LineaProduccion(object):
 
                 while nodo_tarea:
                     tarea = nodo_tarea.valor
-                    print(f"\tTarea: {tarea.nombre}  producto en tarea {tarea.productoEnExe}")
+                    print(f"\tTarea: {tarea.nombre}  producto en tarea {tarea.productoEnProceso}")
                     if not tarea.cola.esta_vacia():
                         nodo_producto = tarea.cola.primero
                         
