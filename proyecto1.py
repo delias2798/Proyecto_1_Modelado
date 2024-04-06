@@ -15,7 +15,7 @@ class Producto():
 
     def __str__(self):
       return f'producto {self.nombre} tiempo {self.tiempoEntarea}'
-    
+
 class Proceso():
 
     def __init__(self,nombre):
@@ -34,14 +34,11 @@ class Tarea(Proceso):
     def __init__(self,nombre,tiempo):
         super().__init__(nombre)
         self.ocupado=False
-        self.productoEnProceso=""
         self.tiempo=tiempo
-
+        self.productoEnExe=None
 
     def __str__(self):
       return self.nombre
-
-
 
 class Nodo(object):
 
@@ -239,14 +236,11 @@ class Lista(object):
         """Cambia el orden de los nodos en la lista enlazada"""
         if pos1 == pos2:
             return  # No se necesita hacer nada si las posiciones son las mismas
-
         nodo1 = self.get_nodo_pos(pos1)
         nodo2 = self.get_nodo_pos(pos2)
-
         nodo1_anterior = None
         nodo2_anterior = None
         nodo_actual = self.primero
-
         # Encuentra los nodos anteriores a los nodos que se van a intercambiar
         while nodo_actual:
             if nodo_actual.siguiente == nodo1:
@@ -274,11 +268,14 @@ class LineaProduccion(object):
 
     def __init__(self):
         self.procInicial = Proceso("Inicio")
-        self.procfunal = Proceso("Fin")
+        self.procfinal = Proceso("Fin")
         self.lProce = Lista()
         self.lProce.insertar_siguiente(self.procInicial)
-        self.lProce.insertar_siguiente(self.procfunal)
+        self.lProce.insertar_siguiente(self.procfinal)
         self.lProce.set_cursor(1)
+        self.inicioL=[]
+        self.finL=[]
+        self.despuesinicio=False
 
     def GenerarReporte(self):
         """Recorre todos los procesos, tareas y productos asociados en la línea de producción"""
@@ -296,7 +293,7 @@ class LineaProduccion(object):
                     print(f"\tTarea: {tarea.nombre}  producto en tarea {tarea.productoEnProceso}")
                     if not tarea.cola.esta_vacia():
                         nodo_producto = tarea.cola.primero
-                        
+
                         while nodo_producto:
                             producto = nodo_producto.valor
                             print(f"\t\tProducto: {producto.nombre} tiempo {producto.tiempoEntarea}")
@@ -341,6 +338,8 @@ class LineaProduccion(object):
               while nodo_tarea:
                   tarea = nodo_tarea.valor
                   if not tarea.cola.esta_vacia():
+                      if not tarea.productoEnExe==None :
+                        ProductoT+=1
                       nodo_producto = tarea.cola.primero
                       while nodo_producto:
                           ProductoT+=1
@@ -349,6 +348,7 @@ class LineaProduccion(object):
                   nodo_tarea = nodo_tarea.siguiente
           procesoT+=1
           nodo_proceso = nodo_proceso.siguiente
+      ProductoT=ProductoT+len(self.inicioL)+len(self.finL)
       return [procesoT-2,TareaT,ProductoT]
 
 
@@ -366,7 +366,7 @@ class LineaProduccion(object):
             while nodo_tarea:
                 tarea = nodo_tarea.valor
                 if tarea.nombre == nombre_tarea:
-                  
+
                     tarea.agregarACola(producto)
                     return  # Se encontró la tarea y se insertó el producto
                 nodo_tarea = nodo_tarea.siguiente
@@ -374,60 +374,172 @@ class LineaProduccion(object):
             nodo_proceso = nodo_proceso.siguiente
 
         print(f"No se encontró la tarea con el nombre '{nombre_tarea}'")
-    
+
+    def insertar_producto(self,producto):
+        self.inicioL.append(producto)
+
     def Actualizar(self):
       nodo_proceso = self.lProce.primero
+
+      if not len(self.inicioL)==0:
+        for producto in self.inicioL:
+
+          pProd=nodo_proceso.siguiente.valor.cola.primero.valor.nombre
+          self.insertar_producto_en_tarea(pProd,producto)
+
+      self.inicioL=[]
+
+
       while nodo_proceso:
           proceso = nodo_proceso.valor
           if not proceso.cola.esta_vacia():
               nodo_tarea = proceso.cola.primero
               while nodo_tarea:
-                
+
                   tarea = nodo_tarea.valor
                   if not tarea.cola.esta_vacia():
+
                     if not tarea.productoEnExe:
                       tarea.productoEnExe=tarea.cola.desencolar()
-                    else:
-                      
+
+                    elif self.despuesinicio:
                       tarea.productoEnExe.tiempoEntarea+=1
+                    self.despuesinicio=True
+
+                    finTie=tarea.productoEnExe.tiempoEntarea>=tarea.tiempo
+                    finLtar=nodo_tarea.siguiente ==None
+                    finPro=nodo_proceso.siguiente.valor.nombre==self.procfinal.nombre
+                    proNoT=nodo_proceso.siguiente.valor.cola.esta_vacia()
+                    if finTie and not finLtar:
+                        produc=tarea.productoEnExe
+                        produc.tiempoEntarea=0
+                        nodo_tarea.siguiente.valor.agregarACola(produc)
+                        tarea.productoEnExe=tarea.cola.desencolar()
+                    elif finTie and finLtar and not finPro and not proNoT:
+                      produc=tarea.productoEnExe
+                      produc.tiempoEntarea=0
+                      nodo_proceso.siguiente.valor.cola.primero.valor.cola.agregarACola(produc)
+                      tarea.productoEnExe=tarea.productoEnExe=tarea.cola.desencolar()
+                    elif finTie and finLtar and finPro:
+                      produc=tarea.productoEnExe
+                      self.finL.append(produc)
+                      tarea.productoEnExe=tarea.productoEnExe=tarea.cola.desencolar()
+                    elif finTie and finLtar and not finPro and proNoT:
+                      produc=tarea.productoEnExe
+                      self.finL.append(produc)
+                      tarea.productoEnExe=tarea.productoEnExe=tarea.cola.desencolar()
+                  else:
+                    if not tarea.productoEnExe==None:
+
+                      finTie=tarea.productoEnExe.tiempoEntarea>=tarea.tiempo
+                      finLtar=nodo_tarea.siguiente ==None
+                      finPro=nodo_proceso.siguiente.valor.nombre==self.procfinal.nombre
+                      proNoT=nodo_proceso.siguiente.valor.cola.esta_vacia()
+                      tarea.productoEnExe.tiempoEntarea+=1
+                      if finTie and not finLtar:
+                          produc=tarea.productoEnExe
+                          produc.tiempoEntarea=0
+                          nodo_tarea.siguiente.valor.agregarACola(produc)
+                          if tarea.cola.esta_vacia():
+                            tarea.productoEnExe=None
+                          else:
+                            tarea.productoEnExe=tarea.cola.desencolar()
+                      elif finTie and finLtar and not finPro and not proNoT:
+                        produc=tarea.productoEnExe
+                        produc.tiempoEntarea=0
+                        nodo_proceso.siguiente.valor.cola.primero.valor.cola.agregarACola(produc)
+                        tarea.productoEnExe=tarea.productoEnExe=tarea.cola.desencolar()
+                      elif finTie and finLtar and finPro:
+                        produc=tarea.productoEnExe
+                        self.finL.append(produc)
+                        tarea.productoEnExe=tarea.productoEnExe=tarea.cola.desencolar()
+                      elif finTie and finLtar and not finPro and proNoT:
+                        produc=tarea.productoEnExe
+                        self.finL.append(produc)
+                        if tarea.cola.esta_vacia():
+                            tarea.productoEnExe=None
+                        else:
+                            tarea.productoEnExe=tarea.cola.desencolar()
+
+
                   nodo_tarea = nodo_tarea.siguiente
-          
+
           nodo_proceso = nodo_proceso.siguiente
 
+    def reiniciar(self):
+      # Vaciar la lista inicioL
+      self.inicioL = []
+
+      # Recorrer todas las tareas
+      nodo_proceso = self.lProce.primero
+      while nodo_proceso:
+          proceso = nodo_proceso.valor
+          nodo_tarea = proceso.cola.primero
+          while nodo_tarea:
+              tarea = nodo_tarea.valor
+
+
+              # Sacar los productos de las colas y ponerlos en inicioL
+              if not tarea.cola.esta_vacia():
+                  primer_producto = tarea.cola.desencolar()
+                  self.inicioL.append(primer_producto)
+               # Sacar el producto en ejecución (si existe)
+              if tarea.productoEnExe:
+                  self.inicioL.append(tarea.productoEnExe)
+                  tarea.productoEnExe = None
+
+              nodo_tarea = nodo_tarea.siguiente
+
+          nodo_proceso = nodo_proceso.siguiente
+
+      self.finL.reverse()
+      for x in range(len(self.finL)):
+        self.inicioL.append (l.finL[x])
+
+      self.inicioL.reverse()
 
 l=LineaProduccion()
 
 p1=Proceso("Preparar")
 l.insertarProceso(p1)
+p2=Proceso("Preparar2")
+l.insertarProceso(p2)
 
 t1=Tarea("Pintar",1)
 p1.agregarACola(t1)
 
-p2=Proceso("Preparar0")
-l.insertarProceso(p2)
 
 t2=Tarea("Empacar",1)
 p1.agregarACola(t2)
 
 pr1=Producto("Figura")
 pr2=Producto("Figura2")
-t1.agregarACola(pr1)
-t1.agregarACola(pr2)
+pr3=Producto("Figura3")
+
+l.insertar_producto(pr3)
+l.insertar_producto(pr2)
+l.insertar_producto(pr1)
+print(l.Mostrar_Info())
+
+
+for x in range(len(l.inicioL)):
+    print (l.inicioL[x])
+
+l.Actualizar()
 l.GenerarReporte()
+print()
+print(l.Mostrar_Info())
+
+l.Actualizar()
+#l.GenerarReporte()
 
 
-"""
-import datetime
-
-def imprimir_cada_segundo():
-    contador = 0
-    tiempo_inicial = datetime.datetime.now()
-    while True:
-        tiempo_actual = datetime.datetime.now()
-        if (tiempo_actual - tiempo_inicial).seconds >= 1:
-            print("Segundo:", contador)
-            contador += 1
-            tiempo_inicial = tiempo_actual
-
-# Llama a la función para empezar a imprimir cada segundo
-imprimir_cada_segundo()"""
+l.Actualizar()
+l.Actualizar()
+l.GenerarReporte()
+for x in range(len(l.finL)):
+    print (l.finL[x])
+print()
+l.reiniciar()
+for x in range(len(l.inicioL)):
+    print (l.inicioL[x])
