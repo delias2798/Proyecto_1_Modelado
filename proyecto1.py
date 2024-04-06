@@ -418,7 +418,7 @@ class LineaProduccion(object):
                     elif finTie and finLtar and not finPro and not proNoT:
                       produc=tarea.productoEnExe
                       produc.tiempoEntarea=0
-                      nodo_proceso.siguiente.valor.cola.primero.valor.cola.agregarACola(produc)
+                      nodo_proceso.siguiente.valor.cola.primero.valor.cola.encolar(produc)
                       tarea.productoEnExe=tarea.productoEnExe=tarea.cola.desencolar()
                     elif finTie and finLtar and finPro:
                       produc=tarea.productoEnExe
@@ -447,7 +447,7 @@ class LineaProduccion(object):
                       elif finTie and finLtar and not finPro and not proNoT:
                         produc=tarea.productoEnExe
                         produc.tiempoEntarea=0
-                        nodo_proceso.siguiente.valor.cola.primero.valor.cola.agregarACola(produc)
+                        nodo_proceso.siguiente.valor.cola.primero.valor.cola.encolar(produc)
                         tarea.productoEnExe=tarea.productoEnExe=tarea.cola.desencolar()
                       elif finTie and finLtar and finPro:
                         produc=tarea.productoEnExe
