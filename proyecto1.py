@@ -100,6 +100,10 @@ class Lista(object):
         self.cursor = None
         self.tamanio = 0
 
+    def __len__(self):
+        """Retorna el tamaño de la lista."""
+        return self.tamanio
+
     def __str__(self):
         lista = '<Lista: '
         siguiente = self.primero
@@ -279,30 +283,33 @@ class LineaProduccion(object):
 
     def GenerarReporte(self):
         """Recorre todos los procesos, tareas y productos asociados en la línea de producción"""
+        reporte = ""
         nodo_proceso = self.lProce.primero
 
         while nodo_proceso:
             proceso = nodo_proceso.valor
-            print(f"Proceso: {proceso.nombre}")
+            reporte += f"Proceso: {proceso.nombre}\n"
 
             if not proceso.cola.esta_vacia():
                 nodo_tarea = proceso.cola.primero
 
                 while nodo_tarea:
                     tarea = nodo_tarea.valor
-                    print(f"\tTarea: {tarea.nombre}  producto en tarea {tarea.productoEnExe}")
+                    reporte += f"\tTarea: {tarea.nombre}  producto en tarea {tarea.productoEnExe}\n"
                     if not tarea.cola.esta_vacia():
                         nodo_producto = tarea.cola.primero
 
                         while nodo_producto:
                             producto = nodo_producto.valor
-                            print(f"\t\tProducto: {producto.nombre} tiempo {producto.tiempoEntarea}")
+                            reporte += f"\t\tProducto: {producto.nombre} tiempo {producto.tiempoEntarea}\n"
 
                             nodo_producto = nodo_producto.siguiente
 
                     nodo_tarea = nodo_tarea.siguiente
 
             nodo_proceso = nodo_proceso.siguiente
+
+        return reporte
 
 
     def insertarProceso(self,pro):

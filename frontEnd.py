@@ -1,9 +1,16 @@
+import threading
+import time
+
 import tkinter as tk
 from tkinter import ttk, messagebox
 from proyecto1 import Producto, Proceso, Tarea, Nodo, Cola, Lista, LineaProduccion
 
 class App:
     def __init__(self, root):
+
+        self.update_thread = None
+        self.update_running = False
+
         self.frame_color = '#3C6373' #verde
         self.text_color_1 = '#FFFFFF' #blanco
         self.text_color_2 = '#000000' #negro 88C9F2
@@ -54,8 +61,21 @@ class App:
 
         self.show_frame(self.frame1)
 
-        # self.setup_linea_produccion()  # Configura la línea de producción con datos iniciales
-        # self.update_frame_with_production_data(self.frame1)  # Actualiza el Frame 1 con datos de la línea de producción
+
+    def start_update_thread(self):
+        self.update_running = True
+        self.update_thread = threading.Thread(target=self.update_loop)
+        self.update_thread.start()
+
+    def update_loop(self):
+        while self.update_running:
+            self.update_frame_with_production_data(self.frame4)
+            time.sleep(1)
+
+    def stop_update_thread(self):
+        self.update_running = False
+        if self.update_thread:
+            self.update_thread.join()
 
     def setup_frame1(self):
         self.frame1 = tk.Frame(self.root, bg=self.frame_color)
@@ -67,7 +87,11 @@ class App:
         
         self.continuar_button_proceso = tk.Button(self.frame1, text="Crear tareas", command=lambda: self.show_frame(self.frame2))
         self.continuar_button_proceso.pack(pady=10)
-        self.continuar_button_proceso.pack_forget() 
+        self.continuar_button_proceso.pack_forget()
+
+        self.cambiar_proceso_button = tk.Button(self.frame1, text="Cambiar Orden de Procesos", command=self.mostrar_frame_cambiar_proceso)
+        self.cambiar_proceso_button.pack(pady=10)
+        self.cambiar_proceso_button.pack_forget()
 
     def add_proceso(self):
         nombre_proceso = self.proceso_entry.get().strip()
@@ -79,9 +103,50 @@ class App:
             self.proceso_actual = proceso
             self.actualizar_lista_procesos()
             self.continuar_button_proceso.pack()
-            # self.show_frame(self.frame2)
+
+            if len(self.linea_produccion.lProce) >= 3:
+                self.cambiar_proceso_button.pack()
         else:
             messagebox.showerror("Error", "Por favor, ingrese un nombre válido para el proceso.")
+
+    def mostrar_frame_cambiar_proceso(self):
+        self.frame_cambiar_proceso = tk.Frame(self.root, bg=self.frame_color)
+        self.frame_cambiar_proceso.grid(row=0, column=0, sticky="nsew")
+
+        tk.Label(self.frame_cambiar_proceso, text="Seleccione dos procesos para cambiar su orden:", bg=self.frame_color, fg=self.text_color_1).pack(pady=10)
+
+        self.proceso1_combobox = ttk.Combobox(self.frame_cambiar_proceso, state="readonly")
+        self.proceso2_combobox = ttk.Combobox(self.frame_cambiar_proceso, state="readonly")
+        self.actualizar_lista_procesos_cambiar()
+        self.proceso1_combobox.pack(pady=10)
+        self.proceso2_combobox.pack(pady=10)
+
+        tk.Button(self.frame_cambiar_proceso, text="Cambiar Orden", command=self.cambiar_orden_procesos).pack(pady=10)
+        tk.Button(self.frame_cambiar_proceso, text="Volver", command=lambda: self.show_frame(self.frame1)).pack(pady=10)
+
+    def actualizar_lista_procesos_cambiar(self):
+        lista_procesos = []
+        nodo_proceso = self.linea_produccion.lProce.primero
+        while nodo_proceso:
+            if nodo_proceso.valor.nombre not in ["Inicio", "Fin"]:
+                lista_procesos.append(nodo_proceso.valor.nombre)
+            nodo_proceso = nodo_proceso.siguiente
+        self.proceso1_combobox['values'] = lista_procesos
+        self.proceso2_combobox['values'] = lista_procesos
+        if lista_procesos:
+            self.proceso1_combobox.current(0)
+            self.proceso2_combobox.current(min(1, len(lista_procesos) - 1))
+
+    def cambiar_orden_procesos(self):
+        proceso1 = self.proceso1_combobox.get()
+        proceso2 = self.proceso2_combobox.get()
+        if proceso1 and proceso2 and proceso1 != proceso2:
+            self.linea_produccion.cambiarProceso(proceso1, proceso2)
+            messagebox.showinfo("Éxito", f"Orden de los procesos '{proceso1}' y '{proceso2}' cambiado.")
+            self.show_frame(self.frame1)
+        else:
+            messagebox.showerror("Error", "Por favor, seleccione dos procesos diferentes.")
+
 
     def setup_frame2(self):
         self.frame2 = tk.Frame(self.root, bg=self.frame_color)
@@ -234,6 +299,9 @@ class App:
         button = ttk.Button(buttons_frame, text=f"Reload", command=self.one_step_cycle, style="Custom.TButton")
         button.pack(side=tk.LEFT, padx=5)
 
+        buttonReporte = ttk.Button(self.frame4, text="Mostrar Reporte", command=self.mostrar_reporte, style="Custom.TButton")
+        buttonReporte.pack(side=tk.LEFT, padx=5)
+
         label = tk.Label(frame, text="Simulador LimProg", font=("Helvetica", 24), bg=self.frame_color, fg=self.text_color_1)
         label.pack(pady=10)
 
@@ -271,6 +339,14 @@ class App:
             nodo_proceso = nodo_proceso.siguiente
 
 
+    def mostrar_reporte(self):
+        reporte_ventana = tk.Toplevel(self.root)
+        reporte_ventana.title("Reporte de Línea de Producción")
+        reporte_ventana.geometry("600x400")
+        reporte_ventana.configure(bg=self.frame_color)
+
+        texto_reporte = self.linea_produccion.GenerarReporte()
+        tk.Label(reporte_ventana, text=texto_reporte, bg=self.frame_color, fg=self.text_color_1, justify=tk.LEFT).pack(pady=10, padx=10)
 
     def setup_screen(self, frame, title, data, screen_number):
         frame.grid(row=0, column=0, sticky="nsew")
